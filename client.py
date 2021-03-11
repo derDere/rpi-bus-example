@@ -53,7 +53,7 @@ class Client:
 
   def setMode(self, mode):
     if mode == MODE_READ:
-      IO.setup(self.gpio, IO.IN, pull_up_down = IO.PUD_DOWN)
+      IO.setup(self.gpio, IO.IN, pull_up_down=IO.PUD_DOWN)
     elif mode == MODE_WRITE:
       IO.setup(self.gpio, IO.OUT, initial=IO.HIGH)
 
@@ -78,14 +78,16 @@ class Client:
   def readByte(self):
     bits = []
     timeoutCounter = 0
+    wasWaiting = False
     while self.get():
-      T.sleep(self.delay * (1/1000))
+      wasWaiting = True
+      T.sleep(self.delay * (1/100))
       timeoutCounter += 1
       if timeoutCounter >= 5000:
         timeoutCounter = 0
         if not self.queueOut.empty():
           return []
-    if timeoutCounter == 0:
+    if not wasWaiting == 0:
       return []
     T.sleep(self.delay * 0.5)
     for n in range(8):
