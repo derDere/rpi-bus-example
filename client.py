@@ -109,7 +109,7 @@ class Client:
   def _eventManager(self):
     while True:
       bits = self.queueIn.get()
-      for byteEvent in self.byteEvents:
+      for byteEvent in self._byteEvents:
         byteEvent(bits2byte(bits))
       #####################
       #print(bits2char(bits), end='', flush=True)
@@ -117,6 +117,14 @@ class Client:
   def start(self):
     Thread(target=self._ioManager, daemon=True).start()
     Thread(target=self._eventManager, daemon=True).start()
+
+  def sendStr(self, str):
+    for char in str:
+      self.queueOut.put(char2bits(char))
+
+  def sendBytes(self, bytes):
+    for byte in bytes:
+      self.queueOut.put(byte2bits(byte))
 
   def onByte(self, callback):
     self._byteEvents.append(callback)
