@@ -106,6 +106,7 @@ class Client:
           self.set(1)
           T.sleep(self.delay * 3)
           self.sendByte(self.queueOut.get(block=False))
+          self.queueOut.task_done()
           self.setMode(MODE_READ)
       bits = self.readByte()
       if len(bits) > 0:
@@ -114,6 +115,7 @@ class Client:
   def _eventManager(self):
     while True:
       bits = self.queueIn.get()
+      self.queueIn.task_done()
       for byteEvent in self._byteEvents:
         byteEvent(bits2byte(bits))
 
