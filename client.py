@@ -8,7 +8,7 @@ MODE_READ = 1
 MODE_WRITE = 2
 
 
-def byte2bits(char):
+def byte2bits(a):
   bits = [
     1 == (a & 1),
     2 == (a & 2),
@@ -115,6 +115,7 @@ class Client:
       #print(bits2char(bits), end='', flush=True)
 
   def start(self):
+    IO.setmode(IO.BCM)
     Thread(target=self._ioManager, daemon=True).start()
     Thread(target=self._eventManager, daemon=True).start()
 
@@ -131,3 +132,28 @@ class Client:
 
   def offByte(self, callback):
     self._byteEvents.remove(callback)
+
+
+def main(argv):
+  gpio = 1
+  if len(argv) > 0:
+    gpio = int(argv[0])
+  bd = 1000
+  if len(argv) > 1:
+    bd = int(argv[1])
+  c = Client(gpio, bd)
+  c.onByte(lambda b: print(chr(b), end='', flush=True))
+  c.start()
+  msg = "xxx"
+  while len(msg) > 0:
+    msg = input()
+    if len(msg) > 0:
+      c.sendStr(msg)
+
+
+if __name__=="__main__":
+  import sys
+  if len(sys.argv) > 1:
+    main(sys.argv[1:])
+  else:
+    main([])
