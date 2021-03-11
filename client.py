@@ -49,6 +49,7 @@ class Client:
     self.setMode(MODE_READ)
     self.queueIn = Queue()
     self.queueOut = Queue()
+    self._byteEvents = []
 
   def setMode(self, mode):
     if mode == MODE_READ:
@@ -108,9 +109,17 @@ class Client:
   def _eventManager(self):
     while True:
       bits = self.queueIn.get()
+      for byteEvent in self.byteEvents:
+        byteEvent(bits2byte(bits))
       #####################
-      print(bits2char(bits), end='', flush=True)
+      #print(bits2char(bits), end='', flush=True)
 
   def start(self):
     Thread(target=self._ioManager, daemon=True).start()
     Thread(target=self._eventManager, daemon=True).start()
+
+  def onByte(self, callback):
+    self._byteEvents.append(callback)
+
+  def offByte(self, callback):
+    self._byteEvents.remove(callback)
