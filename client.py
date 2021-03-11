@@ -101,7 +101,8 @@ class Client:
         T.sleep(self.delay * rnd.random())
         if not self.get():
           self.setMode(MODE_WRITE)
-          T.sleep(self.delay * 1.1)
+          self.set(1)
+          T.sleep(self.delay * 3)
           self.sendByte(self.queueOut.get())
           self.setMode(MODE_READ)
       bits = self.readByte()
