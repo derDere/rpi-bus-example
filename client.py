@@ -46,7 +46,6 @@ class Client:
     self.gpio = gpio_
     self.bd = bd_
     self.delay = 1 / self.bd
-    self.setMode(MODE_READ)
     self.queueIn = Queue()
     self.queueOut = Queue()
     self._byteEvents = []
@@ -116,6 +115,7 @@ class Client:
 
   def start(self):
     IO.setmode(IO.BCM)
+    self.setMode(MODE_READ)
     Thread(target=self._ioManager, daemon=True).start()
     Thread(target=self._eventManager, daemon=True).start()
 
