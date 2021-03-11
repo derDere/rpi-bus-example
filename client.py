@@ -19,7 +19,7 @@ def byte2bits(a):
     64 == (a & 64),
     128 == (a & 128)
   ]
-  return bit
+  return bits
 
 def char2bits(char):
   return byte2bits(ord(char))
