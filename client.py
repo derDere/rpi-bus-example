@@ -81,7 +81,7 @@ class Client:
     while self.get():
       T.sleep(self.delay * (1/1000))
       timeoutCounter += 1
-      if timeoutCounter >= 1000:
+      if timeoutCounter >= 5000:
         timeoutCounter = 0
         if not self.queueOut.empty():
           return []
