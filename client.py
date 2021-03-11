@@ -50,7 +50,7 @@ class Client:
     self.queueIn = Queue()
     self.queueOut = Queue()
 
-  def setMode(mode):
+  def setMode(self, mode):
     if mode == MODE_READ:
       IO.setup(self.gpio, IO.IN)
     elif mode == MODE_WRITE:
