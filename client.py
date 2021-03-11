@@ -141,7 +141,7 @@ def main(argv):
   if len(argv) > 1:
     bd = int(argv[1])
   c = Client(gpio, bd)
-  c.onByte(lambda b: print(chr(b), end='', flush=True) if b >= 97 and b < 123)
+  c.onByte(lambda b: print(chr(b), end='', flush=True) if b >= 97 and b < 123 else False)
   c.start()
   msg = "xxx"
   while len(msg) > 0:
