@@ -53,7 +53,7 @@ class Client:
 
   def setMode(self, mode):
     if mode == MODE_READ:
-      IO.setup(self.gpio, IO.IN)
+      IO.setup(self.gpio, IO.IN, pull_up_down = IO.PUD_DOWN)
     elif mode == MODE_WRITE:
       IO.setup(self.gpio, IO.OUT, initial=IO.HIGH)
 
@@ -111,8 +111,6 @@ class Client:
       bits = self.queueIn.get()
       for byteEvent in self._byteEvents:
         byteEvent(bits2byte(bits))
-      #####################
-      #print(bits2char(bits), end='', flush=True)
 
   def start(self):
     IO.setmode(IO.BCM)
@@ -143,7 +141,7 @@ def main(argv):
   if len(argv) > 1:
     bd = int(argv[1])
   c = Client(gpio, bd)
-  c.onByte(lambda b: print(chr(b), end='', flush=True))
+  c.onByte(lambda b: if b >= 97 and b < 123: print(chr(b), end='', flush=True))
   c.start()
   msg = "xxx"
   while len(msg) > 0:
