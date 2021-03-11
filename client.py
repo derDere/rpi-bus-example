@@ -85,6 +85,8 @@ class Client:
         timeoutCounter = 0
         if not self.queueOut.empty():
           return []
+    if timeoutCounter == 0:
+      return []
     T.sleep(self.delay * 0.5)
     for n in range(8):
       T.sleep(self.delay)
