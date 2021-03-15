@@ -4,6 +4,7 @@ import random as rnd
 from queue import Queue
 from threading import Thread
 
+
 DEFAULT_BD = 1000
 MODE_READ = 1
 MODE_WRITE = 2
@@ -59,6 +60,10 @@ class Client:
     self.queueIn = Queue()
     self.queueOut = Queue()
     self._byteEvents = []
+    self._broadcastEvents = []
+    self._partnerEvents = []
+    self._lineEvents = []
+    self.lines = {}
     self.id = [False, False, False, False]
     self.idN = 0
     self.partners = {}
@@ -115,7 +120,6 @@ class Client:
     T.sleep(self.delay * 2)
     data = self.queueOut.get()
     self.queueOut.task_done()
-    #print("W->", data)
     self._set(0)
     T.sleep(self.delay)
     for bit in data.id:
@@ -128,22 +132,22 @@ class Client:
 
   def broadcast(self):
     self._sendData([False] * 4, [False] * 8)
-    print("broadcast")
+    #print("broadcast")
 
   def sendId(self):
     if self.idN == 0:
-      print("no id to send! Redefining")
+      #print("no id to send! Redefining")
       self._defineId()
     else:
       self._sendData([False] * 4, self.id + ([False] * 4))
-      print("send id")
+      #print("send id")
 
   def _defineId(self):
     oldIdN = self.idN
     for idN in range(1, 15 + 1):
       if not idN in self.partners:
         self.setId(idN)
-        print("Changed ID from %i to %i" % (oldIdN, idN))
+        #print("Changed ID from %i to %i" % (oldIdN, idN))
         if oldIdN != self.idN:
           self.broadcast()
         elif (not self.selfSendId) and self.idN != 0:
@@ -170,14 +174,28 @@ class Client:
       data = bits2byte(dataBits)
       if address == 0 and data == 0:
         self.sendId()
+        for broadcastEvent in self._broadcastEvents:
+          broadcastEvent()
       elif address == 0:
         partnerid = dataBits[:4]
         partneridN = bits2byte(partnerid + ([False] * 4))
         self.partners[partneridN] = partnerid
         self._defineId()
+        for partnerEvent in self._partnerEvents:
+          partnerEvent(partneridN, partnerid)
       else:
+        byte = bits2byte(dataBits)
         for byteEvent in self._byteEvents:
-          byteEvent(bits2byte(addressBits), bits2byte(dataBits))
+          byteEvent(bits2byte(addressBits), byte)
+        if len(self._lineEvents) > 0:
+          if not address in self.lines:
+            self.lines[address] = ""
+          if chr(byte) == "\n":
+            for lineEvent in self._lineEvents:
+              lineEvent(address, self.lines[address])
+            self.lines[address] = ""
+          else:
+            self.lines[address] += chr(byte)
 
   def start(self):
     IO.setmode(IO.BCM)
@@ -199,9 +217,23 @@ class Client:
 
   def onByte(self, callback):
     self._byteEvents.append(callback)
-
   def offByte(self, callback):
     self._byteEvents.remove(callback)
+
+  def onBroadcast(self, callback):
+    self._broadcastEvents.append(callback)
+  def offBroadcast(self, callback):
+    self._broadcastEvents.remove(callback)
+
+  def onPartner(self, callback):
+    self._partnerEvents.append(callback)
+  def offPartner(self, callback):
+    self._partnerEvents.remove(callback)
+
+  def onLine(self, callback):
+    self._lineEvents.append(callback)
+  def offLine(self, callback):
+    self._lineEvents.remove(callback)
 
 
 def main(argv):
@@ -212,7 +244,16 @@ def main(argv):
   if len(argv) > 1:
     bd = int(argv[1])
   c = Client(gpio, bd)
-  c.onByte(lambda a,b: print("%2i: %s" % (a, chr(b))))
+  cb = lambda a,b: print("%2i: %s" % (a, chr(b)))
+  c.onByte(cb)
+  c.offByte(cb)
+  c.onBroadcast(cb)
+  c.offBroadcast(cb)
+  c.onPartner(cb)
+  c.offPartner(cb)
+  c.onLine(cb)
+  c.offLine(cb)
+  c.onLine(cb)
   c.start()
   msg = "."
   while msg[:4] != "exit":
