@@ -125,7 +125,7 @@ class Client:
   def _ioManager(self):
     while True:
       if self._ioWait():
-        if not self.queueOut.empty():
+        if not self.queueOut.empty() or self.sendId:
           self._ioWrite()
       else:
         self._ioSync()
