@@ -139,7 +139,8 @@ class Client:
         print("Changed ID from %i to %i" % (oldIdN, idN))
         if oldIdN != self.idN:
           self.broadcast()
-        else:
+        elif not self.selfSendId:
+          self.selfSendId = True
           self.sendId()
         return
 
@@ -165,9 +166,8 @@ class Client:
       elif address == 0:
         partnerid = dataBits[:4]
         partneridN = bits2byte(partnerid + ([False] * 4))
-        if not partneridN in self.partners:
-          self.partners[partneridN] = partnerid
-          self._defineId()
+        self.partners[partneridN] = partnerid
+        self._defineId()
       else:
         for byteEvent in self._byteEvents:
           byteEvent(bits2byte(addressBits), bits2byte(dataBits))
