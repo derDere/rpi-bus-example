@@ -98,7 +98,7 @@ class Client:
     return bits
 
   def _ioSync(self):
-    while self.get()
+    while self.get():
       pass
 
   def _ioRead(self):
@@ -127,11 +127,11 @@ class Client:
     self.setMode(MODE_WRITE)
     self.set(1)
     T.sleep(self.delay * 2)
-    bits = self.queueOut().get()
+    bits = self.queueOut.get()
     self.queueOut.task_done()
     self.set(0)
     T.sleep(self.delay)
-    for bit in bits():
+    for bit in bits:
       self.set(bit)
       T.sleep(self.delay)
     self.set(0)
