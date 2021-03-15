@@ -62,6 +62,7 @@ class Client:
     self.id = [False, False, False, False]
     self.idN = 0
     self.partners = {}
+    self.selfSendId = False
 
   def _setMode(self, mode):
     if mode == MODE_READ:
@@ -164,8 +165,9 @@ class Client:
       elif address == 0:
         partnerid = dataBits[:4]
         partneridN = bits2byte(partnerid + ([False] * 4))
-        self.partners[partneridN] = partnerid
-        self._defineId()
+        if not partneridN in self.partners:
+          self.partners[partneridN] = partnerid
+          self._defineId()
       else:
         for byteEvent in self._byteEvents:
           byteEvent(bits2byte(addressBits), bits2byte(dataBits))
