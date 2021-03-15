@@ -53,6 +53,9 @@ class Client:
     self.id = [False, False, False, False]
     self.idN = 0
     self.partners = {}
+    self.broadcastCounter = 0
+    self.broadcastSend = False
+    self.sendId = False
 
   def _setMode(self, mode):
     if mode == MODE_READ:
@@ -82,8 +85,8 @@ class Client:
     self.queueIn.put(bits)
 
   def _ioWait(self):
-    SEND_OK = self.id != 0
-    if self.queueOut.empty():
+    SEND_OK = (self.idN != 0) or (not self.broadcastSend)
+    if self.queueOut.empty() and not self.sendId:
       waitEnd = T.time() + (self.delay * 4)
       while not self._get():
         if T.time() > waitEnd:
@@ -97,10 +100,16 @@ class Client:
         return False
 
   def _ioWrite(self):
+    print("W->")
+    self.broadcastSend = True
     self._setMode(MODE_WRITE)
     self._set(1)
     T.sleep(self.delay * 2)
-    bits = self.queueOut.get()
+    if self.sendId:
+      bits = ([False] * 4) + self.id + ([False] * 4)
+      self.sendId = False
+    else:
+      bits = self.queueOut.get()
     self.queueOut.task_done()
     self._set(0)
     T.sleep(self.delay)
@@ -130,7 +139,10 @@ class Client:
       address = bits2byte(addressBits)
       data = bits2byte(dataBits)
       if address == 0 and data == 0:
-        self.queueOut.put(([False] * 4) + self.id + ([False] * 4))
+        #self.queueOut.put(([False] * 4) + self.id + ([False] * 4))
+        self.sendId = True
+        if self.idN == 0:
+          self.broadcastCounter += 1
       elif address == 0:
         partnerid = data[:4]
         partneridN = bits2byte(partnerid + ([False] * 4))
@@ -181,6 +193,7 @@ def main(argv):
     elif msg[:7] == "partner":
       print("Partner\n", c.partners)
   print("ENDE")
+  IO.cleanup()
 
 
 if __name__=="__main__":
