@@ -42,6 +42,15 @@ def bits2char(bits):
   return chr(bits2byte(bits))
 
 
+class Data:
+  def __init__(self, id, bits):
+    self.id = id
+    self.bits = bits
+
+  def __str__(self):
+    return "{id: %s, bits: %s}" % (str(self.id), str(self.bits))
+
+
 class Client:
   def __init__(self, gpio_, bd_):
     self.gpio = gpio_
@@ -54,8 +63,6 @@ class Client:
     self.idN = 0
     self.partners = {}
     self.broadcastCounter = 0
-    self.broadcastSend = False
-    self.sendId = False
 
   def _setMode(self, mode):
     if mode == MODE_READ:
@@ -85,39 +92,32 @@ class Client:
     self.queueIn.put(bits)
 
   def _ioWait(self):
-    SEND_OK = True # (self.idN != 0) # or (not self.sendBroadcast)
-    if self.queueOut.empty(): # and not self.sendId:
+    if self.queueOut.empty():
       waitEnd = T.time() + (self.delay * 4)
       while not self._get():
         if T.time() > waitEnd:
-          return SEND_OK
+          return True
       return False
     else:
       T.sleep(self.delay * (1 + rnd.random()))
       if not self._get():
-        return SEND_OK
+        return True
       else:
         return False
 
   def _ioWrite(self):
-    #self.broadcastSend = True
     self._setMode(MODE_WRITE)
     self._set(1)
     T.sleep(self.delay * 2)
-    #if self.sendId:
-    #  bits = ([False] * 4) + self.id + ([False] * 4)
-    #  self.sendId = False
-    #else:
-    bits = self.id + self.queueOut.get()
+    data = self.queueOut.get()
     self.queueOut.task_done()
-    print("W->", bits)
+    print("W->", data)
     self._set(0)
     T.sleep(self.delay)
-    #if not self.sendId:
-    #  for bit in self.id:
-    #    self._set(bit)
-    #    T.sleep(self.delay)
-    for bit in bits:
+    for bit in data.id:
+      self._set(bit)
+      T.sleep(self.delay)
+    for bit in data.bits:
       self._set(bit)
       T.sleep(self.delay)
     self._set(0)
@@ -125,7 +125,7 @@ class Client:
   def _ioManager(self):
     while True:
       if self._ioWait():
-        if not self.queueOut.empty(): # or self.sendId:
+        if not self.queueOut.empty():
           self._ioWrite()
       else:
         self._ioSync()
@@ -141,35 +141,38 @@ class Client:
       data = bits2byte(dataBits)
       print("A: ", addressBits)
       print("D: ", dataBits)
-      #if address == 0 and data == 0:
-      #  print("send id")
-      #  self.sendId = True
+      if address == 0 and data == 0:
+        print("send id")
+        self._sendData([False] * 4, self.id + ([False] * 4))
         #if self.idN == 0:
         #  self.broadcastCounter += 1
-      #elif address == 0:
+      elif address == 0:
       #  print("Got Partner")
-      #  pass
+        pass
       #  partnerid = dataBits[:4]
       #  partneridN = bits2byte(partnerid + ([False] * 4))
       #  self.partners[partneridN] = partnerid
-      #else:
-      for byteEvent in self._byteEvents:
-        byteEvent(bits2byte(addressBits), bits2byte(dataBits))
+      else:
+        for byteEvent in self._byteEvents:
+          byteEvent(bits2byte(addressBits), bits2byte(dataBits))
 
   def start(self):
     IO.setmode(IO.BCM)
     self._setMode(MODE_READ)
     Thread(target=self._ioManager, daemon=True).start()
     Thread(target=self._eventManager, daemon=True).start()
-    #self.queueOut.put([False] * 8)
+    self._sendData([False]*4, [False]*8)
+
+  def _sendData(self, id, bits):
+    self.queueOut.put(Data(id,bits))
 
   def sendStr(self, str):
     for char in str:
-      self.queueOut.put(char2bits(char))
+      self._sendData(self.id, char2bits(char))
 
   def sendBytes(self, bytes):
     for byte in bytes:
-      self.queueOut.put(byte2bits(byte))
+      self._sendData(self.id, byte2bits(byte))
 
   def onByte(self, callback):
     self._byteEvents.append(callback)
