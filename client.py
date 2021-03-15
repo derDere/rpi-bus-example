@@ -77,12 +77,14 @@ class Client:
       pass
 
   def _ioRead(self):
+    print("R <-")
     T.sleep(self.delay * 1.5)
     bits = []
     for n in range(4 + 8):
       bits.append(self._get())
       T.sleep(self.delay)
     self.queueIn.put(bits)
+    print(bits)
 
   def _ioWait(self):
     SEND_OK = (self.idN != 0) or (not self.broadcastSend)
@@ -110,7 +112,7 @@ class Client:
       self.sendId = False
     else:
       bits = self.queueOut.get()
-    self.queueOut.task_done()
+      self.queueOut.task_done()
     self._set(0)
     T.sleep(self.delay)
     for bit in self.id:
@@ -192,6 +194,10 @@ def main(argv):
       print("ID: %i = " % c.idN, c.id)
     elif msg[:7] == "partner":
       print("Partner\n", c.partners)
+    elif msg[:7] == "set id " and len(msg) > 7:
+      id = int(msg[7:])
+      c.idN = id
+      c.id = byte2bits(id)[:4]
   print("ENDE")
   IO.cleanup()
 
