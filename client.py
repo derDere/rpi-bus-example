@@ -247,7 +247,7 @@ def main(argv):
   c.onLine(lambda a,b: print("%2i: %s" % (a, chr(b))))
   msg = "."
   while msg[:4] != "exit":
-    msg = input()
+    msg = input(">>")
     if msg[:5] == "send " and len(msg) > 5:
       c.sendStr(msg[5:] + "\n")
     elif msg[:2] == "id":
@@ -259,6 +259,14 @@ def main(argv):
       c.setId(id)
     elif msg[:5] == "lines":
       print("Lines\n", c.lines)
+    elif msg[:4] == "help":
+      print("send <msg>")
+      print("id")
+      print("set id <newId>")
+      print("partners")
+      print("lines")
+      print("help")
+      print("exit")
   print("ENDE")
   IO.cleanup()
 
