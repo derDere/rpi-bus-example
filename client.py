@@ -156,7 +156,7 @@ class Client:
     self._setMode(MODE_READ)
     Thread(target=self._ioManager, daemon=True).start()
     Thread(target=self._eventManager, daemon=True).start()
-    self.queueOut.put([False] * (4 + 8))
+    self.queueOut.put([False] * 8)
 
   def sendStr(self, str):
     for char in str:
