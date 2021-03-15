@@ -85,8 +85,8 @@ class Client:
     self.queueIn.put(bits)
 
   def _ioWait(self):
-    SEND_OK = (self.idN != 0) # or (not self.sendBroadcast)
-    if self.queueOut.empty() and not self.sendId:
+    SEND_OK = True # (self.idN != 0) # or (not self.sendBroadcast)
+    if self.queueOut.empty(): # and not self.sendId:
       waitEnd = T.time() + (self.delay * 4)
       while not self._get():
         if T.time() > waitEnd:
@@ -100,16 +100,16 @@ class Client:
         return False
 
   def _ioWrite(self):
-    self.broadcastSend = True
+    #self.broadcastSend = True
     self._setMode(MODE_WRITE)
     self._set(1)
     T.sleep(self.delay * 2)
-    if self.sendId:
-      bits = ([False] * 4) + self.id + ([False] * 4)
-      self.sendId = False
-    else:
-      bits = self.id + self.queueOut.get()
-      self.queueOut.task_done()
+    #if self.sendId:
+    #  bits = ([False] * 4) + self.id + ([False] * 4)
+    #  self.sendId = False
+    #else:
+    bits = self.id + self.queueOut.get()
+    self.queueOut.task_done()
     print("W->", bits)
     self._set(0)
     T.sleep(self.delay)
@@ -125,7 +125,7 @@ class Client:
   def _ioManager(self):
     while True:
       if self._ioWait():
-        if not self.queueOut.empty() or self.sendId:
+        if not self.queueOut.empty(): # or self.sendId:
           self._ioWrite()
       else:
         self._ioSync()
@@ -141,27 +141,27 @@ class Client:
       data = bits2byte(dataBits)
       print("A: ", addressBits)
       print("D: ", dataBits)
-      if address == 0 and data == 0:
-        print("send id")
-        self.sendId = True
+      #if address == 0 and data == 0:
+      #  print("send id")
+      #  self.sendId = True
         #if self.idN == 0:
         #  self.broadcastCounter += 1
-      elif address == 0:
-        print("Got Partner")
-        pass
+      #elif address == 0:
+      #  print("Got Partner")
+      #  pass
       #  partnerid = dataBits[:4]
       #  partneridN = bits2byte(partnerid + ([False] * 4))
       #  self.partners[partneridN] = partnerid
-      else:
-        for byteEvent in self._byteEvents:
-          byteEvent(bits2byte(addressBits), bits2byte(dataBits))
+      #else:
+      for byteEvent in self._byteEvents:
+        byteEvent(bits2byte(addressBits), bits2byte(dataBits))
 
   def start(self):
     IO.setmode(IO.BCM)
     self._setMode(MODE_READ)
     Thread(target=self._ioManager, daemon=True).start()
     Thread(target=self._eventManager, daemon=True).start()
-    self.queueOut.put([False] * 8)
+    #self.queueOut.put([False] * 8)
 
   def sendStr(self, str):
     for char in str:
