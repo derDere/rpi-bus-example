@@ -87,7 +87,7 @@ class Client:
     print(bits)
 
   def _ioWait(self):
-    SEND_OK = (self.idN != 0) or (not self.broadcastSend)
+    SEND_OK = True #(self.idN != 0) or (not self.broadcastSend)
     if self.queueOut.empty() and not self.sendId:
       waitEnd = T.time() + (self.delay * 4)
       while not self._get():
@@ -107,12 +107,12 @@ class Client:
     self._setMode(MODE_WRITE)
     self._set(1)
     T.sleep(self.delay * 2)
-    if self.sendId:
-      bits = ([False] * 4) + self.id + ([False] * 4)
-      self.sendId = False
-    else:
-      bits = self.queueOut.get()
-      self.queueOut.task_done()
+    #if self.sendId:
+    #  bits = ([False] * 4) + self.id + ([False] * 4)
+    #  self.sendId = False
+    #else:
+    bits = self.queueOut.get()
+    self.queueOut.task_done()
     self._set(0)
     T.sleep(self.delay)
     for bit in self.id:
@@ -141,14 +141,15 @@ class Client:
       address = bits2byte(addressBits)
       data = bits2byte(dataBits)
       if address == 0 and data == 0:
+        pass
         #self.queueOut.put(([False] * 4) + self.id + ([False] * 4))
-        self.sendId = True
-        if self.idN == 0:
-          self.broadcastCounter += 1
-      elif address == 0:
-        partnerid = dataBits[:4]
-        partneridN = bits2byte(partnerid + ([False] * 4))
-        self.partners[partneridN] = partnerid
+        #self.sendId = True
+        #if self.idN == 0:
+        #  self.broadcastCounter += 1
+      #elif address == 0:
+      #  partnerid = dataBits[:4]
+      #  partneridN = bits2byte(partnerid + ([False] * 4))
+      #  self.partners[partneridN] = partnerid
       else:
         for byteEvent in self._byteEvents:
           byteEvent(bits2byte(addressBits), bits2byte(bits))
@@ -158,7 +159,7 @@ class Client:
     self._setMode(MODE_READ)
     Thread(target=self._ioManager, daemon=True).start()
     Thread(target=self._eventManager, daemon=True).start()
-    self.queueOut.put([False] * (4 + 8))
+    #self.queueOut.put([False] * (4 + 8))
 
   def sendStr(self, str):
     for char in str:
