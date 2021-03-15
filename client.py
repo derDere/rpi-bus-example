@@ -97,20 +97,65 @@ class Client:
     T.sleep(self.delay * 0.6)
     return bits
 
+  def _ioSync(self):
+    while self.get()
+      pass
+
+  def _ioRead(self):
+    T.sleep(self.delay * 1.5)
+    bits = []
+    for n in range(8):
+      bits.append(self.get())
+      T.sleep(self.delay)
+    self.queueIn.put(bits)
+
+  def _ioWait(self):
+    if self.queueOut.empty():
+      waitEnd = T.time() + (self.delay * 4)
+      while not self.get():
+        if T.time() > waitEnd:
+          return True
+      return False
+    else:
+      T.sleep(self.delay * (1 + rnd.random()))
+      if not self.get():
+        return True
+      else:
+        return False
+
+  def _ioWrite(self):
+    self.setMode(MODE_WRITE)
+    self.set(1)
+    T.sleep(self.delay * 2)
+    bits = self.queueOut().get()
+    self.queueOut.task_done()
+    self.set(0)
+    T.sleep(self.delay)
+    for bit in bits():
+      self.set(bit)
+      T.sleep(self.delay)
+    self.set(0)
+
   def _ioManager(self):
     while True:
-      if not self.queueOut.empty():
-        T.sleep(self.delay * rnd.random())
-        if not self.get():
-          self.setMode(MODE_WRITE)
-          self.set(1)
-          T.sleep(self.delay * 3)
-          self.sendByte(self.queueOut.get(block=False))
-          self.queueOut.task_done()
-          self.setMode(MODE_READ)
-      bits = self.readByte()
-      if len(bits) > 0:
-        self.queueIn.put(bits, block=False)
+      if self._ioWait():
+        if not self.queueOut.empty():
+          self._ioWrite()
+      else:
+        self._ioSync()
+        slef._ioRead()
+    #  if not self.queueOut.empty():
+    #    T.sleep(self.delay * rnd.random())
+    #    if not self.get():
+    #      self.setMode(MODE_WRITE)
+    #      self.set(1)
+    #      T.sleep(self.delay * 3)
+    #      self.sendByte(self.queueOut.get(block=False))
+    #      self.queueOut.task_done()
+    #      self.setMode(MODE_READ)
+    #  bits = self.readByte()
+    #  if len(bits) > 0:
+    #    self.queueIn.put(bits, block=False)
 
   def _eventManager(self):
     while True:
