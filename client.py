@@ -163,11 +163,11 @@ class Client:
 
   def sendStr(self, str):
     for char in str:
-      self.queueOut.put(self.id + char2bits(char))
+      self.queueOut.put(char2bits(char))
 
   def sendBytes(self, bytes):
     for byte in bytes:
-      self.queueOut.put(self.id + byte2bits(byte))
+      self.queueOut.put(byte2bits(byte))
 
   def onByte(self, callback):
     self._byteEvents.append(callback)
