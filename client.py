@@ -50,6 +50,9 @@ class Client:
     self.queueIn = Queue()
     self.queueOut = Queue()
     self._byteEvents = []
+    self.id = [False, False, False, False]
+    self.idN = 0
+    self.partners = {}
 
   def _setMode(self, mode):
     if mode == MODE_READ:
@@ -73,7 +76,7 @@ class Client:
   def _ioRead(self):
     T.sleep(self.delay * 1.5)
     bits = []
-    for n in range(8):
+    for n in range(4 + 8):
       bits.append(self._get())
       T.sleep(self.delay)
     self.queueIn.put(bits)
@@ -100,6 +103,9 @@ class Client:
     self.queueOut.task_done()
     self._set(0)
     T.sleep(self.delay)
+    for bit in self.id:
+      self._set(bit)
+      T.sleep(self.delay)
     for bit in bits:
       self._set(bit)
       T.sleep(self.delay)
@@ -118,22 +124,33 @@ class Client:
     while True:
       bits = self.queueIn.get()
       self.queueIn.task_done()
+      addressBits = bits[:4] + ([False] * 4)
+      dataBits = bits[4:]
+      address = bits2byte(addressBits)
+      data = bits2byte(dataBits)
+      if address == 0 and data == 0:
+        self.queueOut.put(([False] * 8) + self.id)
+      elif address == 0:
+        partnerid = data[:-4]
+        partneridN = bits2byte(partnerid + ([False] * 4))
+        self.partners[partneridN] = partnerid
       for byteEvent in self._byteEvents:
-        byteEvent(bits2byte(bits))
+        byteEvent(bits2byte(addressBits), bits2byte(bits))
 
   def start(self):
     IO.setmode(IO.BCM)
     self._setMode(MODE_READ)
     Thread(target=self._ioManager, daemon=True).start()
     Thread(target=self._eventManager, daemon=True).start()
+    self.queueOut.put([False] * (4 + 8))
 
   def sendStr(self, str):
     for char in str:
-      self.queueOut.put(char2bits(char))
+      self.queueOut.put(self.id + char2bits(char))
 
   def sendBytes(self, bytes):
     for byte in bytes:
-      self.queueOut.put(byte2bits(byte))
+      self.queueOut.put(self.id + byte2bits(byte))
 
   def onByte(self, callback):
     self._byteEvents.append(callback)
@@ -150,7 +167,7 @@ def main(argv):
   if len(argv) > 1:
     bd = int(argv[1])
   c = Client(gpio, bd)
-  c.onByte(lambda b: print(chr(b), end='', flush=True))
+  c.onByte(lambda a,b: print("%2i: %c" % (a, chr(b)), end='', flush=True))
   c.start()
   msg = "xxx"
   while len(msg) > 0:
