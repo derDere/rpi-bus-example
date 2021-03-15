@@ -130,13 +130,14 @@ class Client:
       address = bits2byte(addressBits)
       data = bits2byte(dataBits)
       if address == 0 and data == 0:
-        self.queueOut.put(([False] * 8) + self.id)
+        self.queueOut.put(([False] * 4) + self.id + ([False] * 4))
       elif address == 0:
-        partnerid = data[:-4]
+        partnerid = data[:4]
         partneridN = bits2byte(partnerid + ([False] * 4))
         self.partners[partneridN] = partnerid
-      for byteEvent in self._byteEvents:
-        byteEvent(bits2byte(addressBits), bits2byte(bits))
+      else:
+        for byteEvent in self._byteEvents:
+          byteEvent(bits2byte(addressBits), bits2byte(bits))
 
   def start(self):
     IO.setmode(IO.BCM)
@@ -168,13 +169,18 @@ def main(argv):
   if len(argv) > 1:
     bd = int(argv[1])
   c = Client(gpio, bd)
-  c.onByte(lambda a,b: print("%2i: %c" % (a, chr(b)), end='', flush=True))
+  c.onByte(lambda a,b: print("%2i: %c" % (a, chr(b))))
   c.start()
-  msg = "xxx"
-  while len(msg) > 0:
+  msg = "."
+  while msg[:4] != "exit":
     msg = input()
-    if len(msg) > 0:
-      c.sendStr(msg)
+    if msg[:5] == "send " and len(msg) > 5:
+      c.sendStr(msg[5:])
+    elif msg[:2] == "id":
+      print("ID: %i = " % c.idN, c.id)
+    elif msg[:7] == "partner":
+      print("Partner\n", c.partners)
+  print("ENDE")
 
 
 if __name__=="__main__":
