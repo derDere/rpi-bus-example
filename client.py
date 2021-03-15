@@ -77,17 +77,15 @@ class Client:
       pass
 
   def _ioRead(self):
-    #print("R <-")
     T.sleep(self.delay * 1.5)
     bits = []
     for n in range(4 + 8):
       bits.append(self._get())
       T.sleep(self.delay)
     self.queueIn.put(bits)
-    #print(bits)
 
   def _ioWait(self):
-    SEND_OK = True #(self.idN != 0) or (not self.broadcastSend)
+    SEND_OK = (self.idN != 0) or (not self.broadcastSend)
     if self.queueOut.empty() and not self.sendId:
       waitEnd = T.time() + (self.delay * 4)
       while not self._get():
@@ -102,7 +100,6 @@ class Client:
         return False
 
   def _ioWrite(self):
-    print("W->")
     self.broadcastSend = True
     self._setMode(MODE_WRITE)
     self._set(1)
@@ -113,6 +110,7 @@ class Client:
     else:
       bits = self.queueOut.get()
       self.queueOut.task_done()
+    print("W->", bits)
     self._set(0)
     T.sleep(self.delay)
     if not self.sendId:
@@ -141,10 +139,7 @@ class Client:
       dataBits = bits[4:]
       address = bits2byte(addressBits)
       data = bits2byte(dataBits)
-      print("A: ", addressBits)
-      print("D: ", dataBits)
       if address == 0 and data == 0:
-        #self.queueOut.put(([False] * 4) + self.id + ([False] * 4))
         self.sendId = True
         if self.idN == 0:
           self.broadcastCounter += 1
