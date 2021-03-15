@@ -139,11 +139,16 @@ class Client:
       dataBits = bits[4:]
       address = bits2byte(addressBits)
       data = bits2byte(dataBits)
+      print("A: ", addressBits)
+      print("D: ", dataBits)
       if address == 0 and data == 0:
+        print("send id")
         self.sendId = True
         #if self.idN == 0:
         #  self.broadcastCounter += 1
-      #elif address == 0:
+      elif address == 0:
+        print("Got Partner")
+        pass
       #  partnerid = dataBits[:4]
       #  partneridN = bits2byte(partnerid + ([False] * 4))
       #  self.partners[partneridN] = partnerid
