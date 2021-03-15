@@ -123,9 +123,11 @@ class Client:
 
   def broadcast(self):
     self._sendData([False] * 4, [False] * 8)
+    print("broadcast")
 
   def sendId(self):
     self._sendData([False] * 4, self.id + ([False] * 4))
+    print("send id")
 
   def _defineId(self):
     oldIdN = self.idN
@@ -133,6 +135,7 @@ class Client:
       if not idN in self.partners:
         self.idN = idN
         self.id = byte2bits(idN)[:4]
+        print("Changed ID from %i to %i" % (oldIdN, idN))
         if oldIdN != self.idN:
           self.broadcast()
         else:
@@ -156,13 +159,9 @@ class Client:
       dataBits = bits[4:]
       address = bits2byte(addressBits)
       data = bits2byte(dataBits)
-      print("A: ", addressBits)
-      print("D: ", dataBits)
       if address == 0 and data == 0:
-        #print("send id")
         self.sendId()
       elif address == 0:
-        #print("Got Partner")
         partnerid = dataBits[:4]
         partneridN = bits2byte(partnerid + ([False] * 4))
         self.partners[partneridN] = partnerid
