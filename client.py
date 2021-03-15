@@ -85,7 +85,7 @@ class Client:
     self.queueIn.put(bits)
 
   def _ioWait(self):
-    SEND_OK = (self.idN != 0) or (not self.broadcastSend)
+    SEND_OK = (self.idN != 0) # or (not self.sendBroadcast)
     if self.queueOut.empty() and not self.sendId:
       waitEnd = T.time() + (self.delay * 4)
       while not self._get():
