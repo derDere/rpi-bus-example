@@ -82,16 +82,17 @@ class Client:
     self.queueIn.put(bits)
 
   def _ioWait(self):
+    SEND_OK = self.id != 0
     if self.queueOut.empty():
       waitEnd = T.time() + (self.delay * 4)
       while not self._get():
         if T.time() > waitEnd:
-          return True
+          return SEND_OK
       return False
     else:
       T.sleep(self.delay * (1 + rnd.random()))
       if not self._get():
-        return True
+        return SEND_OK
       else:
         return False
 
