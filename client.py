@@ -244,7 +244,7 @@ def main(argv):
   if len(argv) > 1:
     bd = int(argv[1])
   c = Client(gpio, bd)
-  c.onLine(lambda a,b: print("%2i: %s" % (a, chr(b))))
+  c.onLine(lambda address,line: print("%X: %s" % (address, line)))
   c.start()
   msg = "."
   while msg[:4] != "exit":
