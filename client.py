@@ -108,15 +108,15 @@ class Client:
       bits = ([False] * 4) + self.id + ([False] * 4)
       self.sendId = False
     else:
-      bits = self.queueOut.get()
+      bits = self.id + self.queueOut.get()
       self.queueOut.task_done()
     print("W->", bits)
     self._set(0)
     T.sleep(self.delay)
-    if not self.sendId:
-      for bit in self.id:
-        self._set(bit)
-        T.sleep(self.delay)
+    #if not self.sendId:
+    #  for bit in self.id:
+    #    self._set(bit)
+    #    T.sleep(self.delay)
     for bit in bits:
       self._set(bit)
       T.sleep(self.delay)
@@ -141,12 +141,12 @@ class Client:
       data = bits2byte(dataBits)
       if address == 0 and data == 0:
         self.sendId = True
-        if self.idN == 0:
-          self.broadcastCounter += 1
-      elif address == 0:
-        partnerid = dataBits[:4]
-        partneridN = bits2byte(partnerid + ([False] * 4))
-        self.partners[partneridN] = partnerid
+        #if self.idN == 0:
+        #  self.broadcastCounter += 1
+      #elif address == 0:
+      #  partnerid = dataBits[:4]
+      #  partneridN = bits2byte(partnerid + ([False] * 4))
+      #  self.partners[partneridN] = partnerid
       else:
         for byteEvent in self._byteEvents:
           byteEvent(bits2byte(addressBits), bits2byte(dataBits))
