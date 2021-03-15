@@ -64,6 +64,10 @@ class Client:
     self.partners = {}
     self.selfSendId = False
 
+  def setId(self, idN):
+    self.idN = idN
+    self.id = byte2bits(idN)[:4]
+
   def _setMode(self, mode):
     if mode == MODE_READ:
       IO.setup(self.gpio, IO.IN, pull_up_down=IO.PUD_DOWN)
@@ -127,19 +131,21 @@ class Client:
     print("broadcast")
 
   def sendId(self):
-    self._sendData([False] * 4, self.id + ([False] * 4))
-    print("send id")
+    if self.idN == 0:
+      print("no id to send")
+    else:
+      self._sendData([False] * 4, self.id + ([False] * 4))
+      print("send id")
 
   def _defineId(self):
     oldIdN = self.idN
     for idN in range(1, 15 + 1):
       if not idN in self.partners:
-        self.idN = idN
-        self.id = byte2bits(idN)[:4]
+        self.setId(idN)
         print("Changed ID from %i to %i" % (oldIdN, idN))
         if oldIdN != self.idN:
           self.broadcast()
-        elif not self.selfSendId:
+        elif (not self.selfSendId) and self.idN != 0:
           self.selfSendId = True
           self.sendId()
         return
@@ -218,8 +224,7 @@ def main(argv):
       print("Partner\n", c.partners)
     elif msg[:7] == "set id " and len(msg) > 7:
       id = int(msg[7:])
-      c.idN = id
-      c.id = byte2bits(id)[:4]
+      c.setId(id)
   print("ENDE")
   IO.cleanup()
 
