@@ -244,22 +244,12 @@ def main(argv):
   if len(argv) > 1:
     bd = int(argv[1])
   c = Client(gpio, bd)
-  cb = lambda a,b: print("%2i: %s" % (a, chr(b)))
-  c.onByte(cb)
-  c.offByte(cb)
-  c.onBroadcast(cb)
-  c.offBroadcast(cb)
-  c.onPartner(cb)
-  c.offPartner(cb)
-  c.onLine(cb)
-  c.offLine(cb)
-  c.onLine(cb)
-  c.start()
+  c.onLine(lambda a,b: print("%2i: %s" % (a, chr(b))))
   msg = "."
   while msg[:4] != "exit":
     msg = input()
     if msg[:5] == "send " and len(msg) > 5:
-      c.sendStr(msg[5:])
+      c.sendStr(msg[5:] + "\n")
     elif msg[:2] == "id":
       print("ID: %i = " % c.idN, c.id)
     elif msg[:7] == "partner":
@@ -267,6 +257,8 @@ def main(argv):
     elif msg[:7] == "set id " and len(msg) > 7:
       id = int(msg[7:])
       c.setId(id)
+    elif msg[:5] == "lines":
+      print("Lines\n", c.lines)
   print("ENDE")
   IO.cleanup()
 
