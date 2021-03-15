@@ -147,11 +147,11 @@ class Client:
         #if self.idN == 0:
         #  self.broadcastCounter += 1
       elif address == 0:
-      #  print("Got Partner")
-        pass
-      #  partnerid = dataBits[:4]
-      #  partneridN = bits2byte(partnerid + ([False] * 4))
-      #  self.partners[partneridN] = partnerid
+        print("Got Partner")
+      #  pass
+        partnerid = dataBits[:4]
+        partneridN = bits2byte(partnerid + ([False] * 4))
+        self.partners[partneridN] = partnerid
       else:
         for byteEvent in self._byteEvents:
           byteEvent(bits2byte(addressBits), bits2byte(dataBits))
