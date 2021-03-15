@@ -115,7 +115,7 @@ class Client:
     T.sleep(self.delay * 2)
     data = self.queueOut.get()
     self.queueOut.task_done()
-    print("W->", data)
+    #print("W->", data)
     self._set(0)
     T.sleep(self.delay)
     for bit in data.id:
@@ -132,7 +132,8 @@ class Client:
 
   def sendId(self):
     if self.idN == 0:
-      print("no id to send")
+      print("no id to send! Redefining")
+      self._defineId()
     else:
       self._sendData([False] * 4, self.id + ([False] * 4))
       print("send id")
