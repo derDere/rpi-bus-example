@@ -62,7 +62,6 @@ class Client:
     self.id = [False, False, False, False]
     self.idN = 0
     self.partners = {}
-    self.broadcastCounter = 0
 
   def _setMode(self, mode):
     if mode == MODE_READ:
@@ -122,6 +121,24 @@ class Client:
       T.sleep(self.delay)
     self._set(0)
 
+  def broadcast(self):
+    self._sendData([False] * 4, [False] * 8)
+
+  def sendId(self):
+    self._sendData([False] * 4, self.id + ([False] * 4))
+
+  def _defineId(self):
+    oldIdN = self.idN
+    for idN in range(1, 15 + 1):
+      if not idN in self.partners:
+        self.idN = idN
+        self.id = byte2bits(idN)[:4]
+        if oldIdN != self.idN:
+          self.broadcast()
+        else:
+          self.sendId()
+        return
+
   def _ioManager(self):
     while True:
       if self._ioWait():
@@ -142,16 +159,14 @@ class Client:
       print("A: ", addressBits)
       print("D: ", dataBits)
       if address == 0 and data == 0:
-        print("send id")
-        self._sendData([False] * 4, self.id + ([False] * 4))
-        #if self.idN == 0:
-        #  self.broadcastCounter += 1
+        #print("send id")
+        self.sendId()
       elif address == 0:
-        print("Got Partner")
-      #  pass
+        #print("Got Partner")
         partnerid = dataBits[:4]
         partneridN = bits2byte(partnerid + ([False] * 4))
         self.partners[partneridN] = partnerid
+        self._defineId()
       else:
         for byteEvent in self._byteEvents:
           byteEvent(bits2byte(addressBits), bits2byte(dataBits))
@@ -161,7 +176,7 @@ class Client:
     self._setMode(MODE_READ)
     Thread(target=self._ioManager, daemon=True).start()
     Thread(target=self._eventManager, daemon=True).start()
-    self._sendData([False]*4, [False]*8)
+    self.broadcast()
 
   def _sendData(self, id, bits):
     self.queueOut.put(Data(id,bits))
