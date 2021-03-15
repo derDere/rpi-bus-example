@@ -143,7 +143,7 @@ class Client:
           self._ioWrite()
       else:
         self._ioSync()
-        slef._ioRead()
+        self._ioRead()
     #  if not self.queueOut.empty():
     #    T.sleep(self.delay * rnd.random())
     #    if not self.get():
