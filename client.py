@@ -132,22 +132,22 @@ class Client:
 
   def broadcast(self):
     self._sendData([False] * 4, [False] * 8)
-    #print("broadcast")
+    print("broadcast")
 
   def sendId(self):
     if self.idN == 0:
-      #print("no id to send! Redefining")
+      print("no id to send! Redefining")
       self._defineId()
     else:
       self._sendData([False] * 4, self.id + ([False] * 4))
-      #print("send id")
+      print("send id")
 
   def _defineId(self):
     oldIdN = self.idN
     for idN in range(1, 15 + 1):
       if not idN in self.partners:
         self.setId(idN)
-        #print("Changed ID from %i to %i" % (oldIdN, idN))
+        print("Changed ID from %i to %i" % (oldIdN, idN))
         if oldIdN != self.idN:
           self.broadcast()
         elif (not self.selfSendId) and self.idN != 0:
@@ -245,6 +245,7 @@ def main(argv):
     bd = int(argv[1])
   c = Client(gpio, bd)
   c.onLine(lambda a,b: print("%2i: %s" % (a, chr(b))))
+  c.start()
   msg = "."
   while msg[:4] != "exit":
     msg = input(">>")
