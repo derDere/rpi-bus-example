@@ -36,12 +36,15 @@ class ChatForm(npys.FormMuttActiveTraditional):
     global margin, grayscale
     who += ":"
     who = Now() + "| " + who
-    line = who + (" " * (margin - len(who))) + msg
+    who = who + (" " * (margin - len(who)))
+    #line = "\033[92m%s\033[96m%s\033[0m%s" % (who[:6], who[6:], msg)
+    line = "%s%s%s" % (who[:6], who[6:], msg)
     self.wMain.values.insert(0, line)
     self.wMain.display()
 
   def addInfo(self, Info):
-    self.wMain.values.insert(0, Info)
+    global margin
+    self.wMain.values.insert(0, (" " * margin) + Info)
     self.wMain.display()
 
 class ChatApp(npys.NPSApp):
@@ -82,6 +85,12 @@ def main(argv):
     global nicks
     nicks[address] = partnerNick
 
+  def PrintMessage(who, msg):
+    who += ":"
+    who = Now() + "| " + who
+    who += (" " * (margin - len(who)))
+    print("\r\033[92m%s\033[96m%s\033[0m%s" % (who[0:6], who[6:], msg))
+
   def OnChatLine(address, line):
     global capp, nicks, terminal, margin
     if line[0] == "/":
@@ -97,18 +106,15 @@ def main(argv):
       if address in nicks:
         who = nicks[address]
       if terminal:
-        who += ":"
-        who = Now() + "| " + who
-        who += (" " * (margin - len(who)))
-        print("\r%s%s" % (who, line[1:]))
+        PrintMessage(who, line[1:])
       else:
         capp.chatForm.addMsg(who, line[1:])
 
   def PrintInfo(*InfoLines):
-    global capp, terminal
+    global capp, terminal, margin
     for Info in InfoLines:
       if terminal:
-        print(Info)
+        print(bcolors.OKBLUE + (" " * margin) + Info + bcolors.ENDC)
       else:
         capp.chatForm.addInfo(Info)
 
@@ -145,16 +151,17 @@ def main(argv):
     capp.run()
   else:
     run = True
-    print("Enter /? for help")
+    PrintInfo("Enter /? for help")
     while run:
       cmd = input()
       if cmd[0] == "/":
         if cmd[1:] in commands:
           commands[cmd[1:]]()
         else:
-          print("Unknown command")
+          PrintInfo("Unknown command")
       else:
         Send(cmd)
+        PrintMessage(nick, cmd)
 
 
 @atexit.register
